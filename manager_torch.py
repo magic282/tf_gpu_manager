@@ -17,6 +17,12 @@ torch.cuda.set_device(gm.auto_choice())
 
 import os
 import torch
+
+linux_path = 'nvidia-smi'
+windows_path = r'"c:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe"'
+
+smi_path = windows_path if os.name == 'nt' else linux_path
+
 def check_gpus():
     '''
     GPU available check
@@ -25,7 +31,7 @@ def check_gpus():
     if not torch.cuda.is_available():
         print('This script could only be used to manage NVIDIA GPUs,but no GPU found in your device')
         return False
-    elif not 'NVIDIA System Management' in os.popen('nvidia-smi -h').read():
+    elif not 'NVIDIA System Management' in os.popen('{0} -h'.format(smi_path)).read():
         print("'nvidia-smi' tool not found.")
         return False
     return True
@@ -58,7 +64,7 @@ if check_gpus():
         查询GPU信息
         '''
         qargs =['index','gpu_name', 'memory.free', 'memory.total', 'power.draw', 'power.limit']+ qargs
-        cmd = 'nvidia-smi --query-gpu={} --format=csv,noheader'.format(','.join(qargs))
+        cmd = '{0} --query-gpu={1} --format=csv,noheader'.format(smi_path, ','.join(qargs))
         results = os.popen(cmd).readlines()
         return [parse(line,qargs) for line in results]
     
@@ -110,7 +116,7 @@ if check_gpus():
                 return sorted(gpus,key=key,reverse=reverse)
             raise ValueError("The argument 'key' must be a function or a key in query args,please read the documention of nvidia-smi")
 
-        def auto_choice(self,mode=0):
+        def auto_choose(self,mode=0):
             '''
             mode:
                 0:(default)sorted by free memory size
